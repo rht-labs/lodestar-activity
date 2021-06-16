@@ -1,0 +1,30 @@
+name: lodestar-activity
+development: true
+
+imageName: "lodestar-activity"
+imageTag: "latest"
+
+builderImage: registry.access.redhat.com/ubi8/openjdk-11
+builderImageTag: 1.3
+
+servicePort: 8080
+
+git:
+  uri: https://github.com/rht-labs/lodestar-activity.git
+  ref: master
+
+db:
+  version: 12
+  user: banana
+  password: bread
+  name: activitydb
+  adminPassword: password
+  url: jdbc:postgresql://localhost:5432/activitydb
+
+api:
+  gitlab: http://gitlab.com
+  engagement: http://git-api:8080
+
+tokens:
+  webhook: nope
+  gitlab: nope
