@@ -9,10 +9,12 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * A simple class holding a results from a number of paged queries to gitlab
@@ -27,11 +29,10 @@ import lombok.NoArgsConstructor;
 public class PagedResults<T> {
     public static final Logger LOGGER = LoggerFactory.getLogger(PagedResults.class);
     
-    private static final int UNDEFINED_PAGE_COUNT = 10000;
-    private int pageSize;
-    @Builder.Default private int number = 1;
-    @Builder.Default private int total = 1;
-    @Builder.Default private List<T> results = new ArrayList<>();
+    @Setter(value = AccessLevel.NONE) private int pageSize;
+    @Builder.Default @Setter(value = AccessLevel.NONE) private int number = 1;
+    @Builder.Default @Setter(value = AccessLevel.NONE) private int total = 10000;
+    @Builder.Default @Setter(value = AccessLevel.NONE) private List<T> results = new ArrayList<>();
     
     public PagedResults(int pageSize) {
         this();
@@ -46,22 +47,10 @@ public class PagedResults<T> {
     public void update(Response response, GenericType<List<T>> type) {
         LOGGER.trace("page result update");
         
-        if(number == 1) {
-            String totalPageString = response.getHeaderString("X-Total-Pages");
-            
-            if(totalPageString == null) {
-                total = UNDEFINED_PAGE_COUNT; //Should not be able to get this high
-                LOGGER.trace("X-Total-Pages header is missing");
-            } else {
-                total = Integer.valueOf(totalPageString);
-            }
-            
-            LOGGER.trace("TOTAL PAGES {}", total);
-        }
         List<T> responseSet = response.readEntity(type);
         
         //There weren't enough  results to fetch another page
-        if(responseSet.size() < pageSize && total == UNDEFINED_PAGE_COUNT) {
+        if(responseSet.size() < pageSize) {
             total = 1;
         }
         

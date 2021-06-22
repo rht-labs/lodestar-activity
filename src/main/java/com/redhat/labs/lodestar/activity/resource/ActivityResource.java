@@ -8,6 +8,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -83,7 +84,7 @@ public class ActivityResource {
     public Response postWebhook(@HeaderParam(value = "x-gitlab-token") String gitLabToken, Hook hook) {
 
         if (!webhookToken.equals(gitLabToken)) {
-            LOGGER.error("Invalid status token used");
+            LOGGER.error("Invalid gitlab token used");
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
@@ -93,14 +94,16 @@ public class ActivityResource {
         return Response.ok(hook).build();
     }
 
-    @POST
+    @PUT
     @Path("/refresh")
+    @APIResponses(value = { @APIResponse(responseCode = "202", description = "The request was accepted and will be processed.") })
+    @Operation(summary = "Refreshes database with data in git, purging first")
     public Response refreshActivity() {
 
         activityService.purge();
         activityService.refresh();
 
-        return Response.ok().build();
+        return Response.accepted().build();
     }
 
 }

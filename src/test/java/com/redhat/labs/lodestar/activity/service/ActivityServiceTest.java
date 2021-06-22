@@ -8,61 +8,79 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
-import com.redhat.labs.lodestar.activity.mock.EngagementWireMock;
+import com.redhat.labs.lodestar.activity.mock.ExternalApiWireMock;
 import com.redhat.labs.lodestar.activity.model.Commit;
+import com.redhat.labs.lodestar.activity.model.GitlabProject;
+import com.redhat.labs.lodestar.activity.model.Hook;
 
-import io.quarkus.panache.common.Sort;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.h2.H2DatabaseTestResource;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.mockito.InjectMock;
 
 @QuarkusTest
-@QuarkusTestResource(H2DatabaseTestResource.class)
-@QuarkusTestResource(EngagementWireMock.class)
+@QuarkusTestResource(H2DatabaseTestResource.class)@QuarkusTestResource(ExternalApiWireMock.class)
 public class ActivityServiceTest {
 
     @Inject
     ActivityService service;
-    
-    @InjectMock
-    CommitRepository commitRepository;
-    
-//    @InjectMock
-//    GitlabRestClient gitlabRestClient;
-    
-    @BeforeEach
-    public void mockOut() {
-        
-        
-        
-    }
-    
-    @Test
-    public void getActivityCountForUuid() {
-        Mockito.when(commitRepository.count("engagementUuid", "abc")).thenReturn(4L);
-        Assertions.assertEquals(4L, service.getTotalActivityByUuid("abc"));
-    }
-    
-    
-    @Test
-    public void getAllCommitsForUuidSuccess() {
 
-        List<Commit> commits = new ArrayList<>();
-        commits.add(Commit.builder().id("1").engagementUuid("abc").build());
-        commits.add(Commit.builder().id("2").engagementUuid("abc").build());
-        commits.add(Commit.builder().id("3").engagementUuid("abc").build());
-        
-        //Mockito.when(commitRepository.list(Mockito.eq("engagementUuid"), Mockito.any(Sort.class), Mockito.eq("abc"))).thenReturn(commits);
-        Mockito.when(commitRepository.list(Mockito.eq("engagementUuid"), Mockito.any(Sort.class), ArgumentMatchers.<String>any())).thenReturn(commits);
-        
-        List<Commit> activity = service.getActivityByUuid("abc");
+    @BeforeEach
+    public void init() {
+        service.refresh();
+    }
+
+    @Test
+    public void testPurge() {
+
+        long deletes = service.purge();
+
+        Assertions.assertEquals(3, deletes);
+    }
+
+    @Test
+    public void testActivityCount() {
+
+        long activity = service.getActivityCount();
+
+        Assertions.assertEquals(3L, activity);
+    }
+
+    @Test
+    public void testHook() {
+
+        List<Commit> queryResp = new ArrayList<>();
+        GitlabProject glp = GitlabProject.builder().pathWithNamespace("main/store/Hats/Cap/iac").build();
+        queryResp.add(Commit.builder().id("1").projectId(1L).engagementUuid("abc").build());
+        queryResp.add(Commit.builder().id("2").projectId(1L).engagementUuid("abc").build());
+
+        Hook hook = Hook.builder().projectId(1L).project(glp).commits(queryResp).build();
+        service.addNewCommits(hook);
+
+        Assertions.assertEquals(5, service.getActivityCount());
+    }
+
+    @Test
+    public void testActivityCountForUuid() {
+        Assertions.assertEquals(3, service.getTotalActivityByUuid("cb570945-a209-40ba-9e42-63a7993baf4d"));
+    }
+
+    @Test
+    public void testPagedActivity() {
+        Assertions.assertEquals(2, service.getPagedActivityByUuid("cb570945-a209-40ba-9e42-63a7993baf4d", 0, 2).size());
+    }
+
+    @Test
+    public void testAllCommitsForUuidSuccess() {
+
+        List<Commit> activity = service.getActivityByUuid("cb570945-a209-40ba-9e42-63a7993baf4d");
         Assertions.assertEquals(3, activity.size());
 
     }
     
-    
+    @Test
+    public void testGetAllPaged() {
+        Assertions.assertEquals(1, service.getAll(1, 2).size());
+    }
+
 }
