@@ -1,6 +1,7 @@
 package com.redhat.labs.lodestar.activity.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -19,7 +20,8 @@ import io.quarkus.test.h2.H2DatabaseTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
-@QuarkusTestResource(H2DatabaseTestResource.class)@QuarkusTestResource(ExternalApiWireMock.class)
+@QuarkusTestResource(H2DatabaseTestResource.class)
+@QuarkusTestResource(ExternalApiWireMock.class)
 public class ActivityServiceTest {
 
     @Inject
@@ -37,6 +39,13 @@ public class ActivityServiceTest {
 
         Assertions.assertEquals(3, deletes);
     }
+    
+    @Test
+    public void testPurgeProject() {
+        Hook hook = Hook.builder().projectId(13065L).build();
+        long deletes = service.purge(hook);
+        Assertions.assertEquals(3, deletes);
+    }
 
     @Test
     public void testActivityCount() {
@@ -52,12 +61,13 @@ public class ActivityServiceTest {
         List<Commit> queryResp = new ArrayList<>();
         GitlabProject glp = GitlabProject.builder().pathWithNamespace("main/store/Hats/Cap/iac").build();
         queryResp.add(Commit.builder().id("1").projectId(1L).engagementUuid("abc").build());
-        queryResp.add(Commit.builder().id("2").projectId(1L).engagementUuid("abc").build());
+        queryResp.add(Commit.builder().id("2").modified(Collections.singletonList("engagement.json")).projectId(1L)
+                .engagementUuid("abc").build());
 
         Hook hook = Hook.builder().projectId(1L).project(glp).commits(queryResp).build();
         service.addNewCommits(hook);
 
-        Assertions.assertEquals(5, service.getActivityCount());
+        Assertions.assertEquals(4, service.getActivityCount());
     }
 
     @Test
@@ -77,7 +87,7 @@ public class ActivityServiceTest {
         Assertions.assertEquals(3, activity.size());
 
     }
-    
+
     @Test
     public void testGetAllPaged() {
         Assertions.assertEquals(1, service.getAll(1, 2).size());

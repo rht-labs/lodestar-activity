@@ -47,6 +47,36 @@
     "committer_email": "leo.alvesdearaujo@gmail.com",
     "committed_date": "2020-04-01T21:32:41.000-03:00",
     "web_url": "https://gitlab.consulting.redhat.com/consulting-brazil/cloud-wg/ocp-healthcheck/-/commit/121c7976ae240f32b78dd869ebde9aed710b3cc4"
+  },
+  {
+    "id": "4",
+    "short_id": "4",
+    "created_at": "2020-04-01T21:32:41.000-03:00",
+    "parent_ids": [],
+    "title": "Fake",
+    "message": "Skip",
+    "author_name": "Leonardo A. Araujo",
+    "author_email": "bot@bot.com",
+    "authored_date": "2020-04-01T21:32:41.000-03:00",
+    "committer_name": "Leonardo A. Araujo",
+    "committer_email": "leo.alvesdearaujo@gmail.com",
+    "committed_date": "2020-04-01T21:32:41.000-03:00",
+    "web_url": "https://gitlab.consulting.redhat.com/consulting-brazil/cloud-wg/ocp-healthcheck/-/commit/121c7976ae240f32b78dd869ebde9aed710b3cc4"
+  },
+  {
+    "id": "5",
+    "short_id": "5",
+    "created_at": "2020-04-01T21:32:41.000-03:00",
+    "parent_ids": [],
+    "title": "Fake",
+    "message": "manual_refresh\n",
+    "author_name": "Leonardo A. Araujo",
+    "author_email": "leo.alvesdearaujo@gmail.com",
+    "authored_date": "2020-04-01T21:32:41.000-03:00",
+    "committer_name": "Leonardo A. Araujo",
+    "committer_email": "leo.alvesdearaujo@gmail.com",
+    "committed_date": "2020-04-01T21:32:41.000-03:00",
+    "web_url": "https://gitlab.consulting.redhat.com/consulting-brazil/cloud-wg/ocp-healthcheck/-/commit/121c7976ae240f32b78dd869ebde9aed710b3cc4"
   }
 ]
 

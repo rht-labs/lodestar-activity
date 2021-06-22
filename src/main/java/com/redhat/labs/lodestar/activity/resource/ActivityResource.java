@@ -39,6 +39,9 @@ public class ActivityResource {
 
     @ConfigProperty(name = "gitlab.webhook.token")
     String webhookToken;
+    
+    @ConfigProperty(name = "engagement.file")
+    String engagementFile;
 
     @GET
     @Path("/uuid/{uuid}")
@@ -89,7 +92,17 @@ public class ActivityResource {
         }
 
         LOGGER.debug("Hook for {}", hook);
-        activityService.addNewCommits(hook);
+        
+        if(hook.wasProjectDeleted()) {
+            LOGGER.debug("Hook Project Deleted {}", hook.getProjectId());
+            activityService.purge(hook);
+            return Response.status(Status.NO_CONTENT).build();
+        }
+        
+        if(hook.didFileChange(engagementFile)) {
+            activityService.addNewCommits(hook);
+            return Response.accepted().build();
+        }
 
         return Response.ok(hook).build();
     }

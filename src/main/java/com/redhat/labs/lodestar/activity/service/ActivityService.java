@@ -40,6 +40,9 @@ public class ActivityService {
 
     @ConfigProperty(name = "commit.filter.list")
     List<String> commitFilteredEmails;
+    
+    @ConfigProperty(name = "engagement.file")
+    String engagementFile;
 
     @Inject
     @RestClient
@@ -64,6 +67,9 @@ public class ActivityService {
         if (count == 0) {
             refresh();
         }
+        
+        count = commitRepository.count();
+        LOGGER.debug("There are now {} commits in the activity db.", count);
     }
 
     /**
@@ -80,19 +86,29 @@ public class ActivityService {
             if (entity.isEmpty()) {
                 LOGGER.debug("Pid {} Commit {}", hook.getProjectId(), commit.getId());
                 Commit fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false); // TODO 404?
-                Engagement engagement = engagementRestClient.getEngagement(hook.getCustomerName(),
-                        hook.getEngagementName(), false);
-                fullCommit.setEngagementUuid(engagement.getUuid());
-                fullCommit.setProjectId(hook.getProjectId());
-                commitRepository.persist(fullCommit);
+                if(commit.didFileChange(engagementFile) && filterCommit(fullCommit)) {
+                    Engagement engagement = engagementRestClient.getEngagement(hook.getCustomerName(),
+                            hook.getEngagementName(), false);
+                    fullCommit.setEngagementUuid(engagement.getUuid());
+                    fullCommit.setProjectId(hook.getProjectId());
+                    commitRepository.persist(fullCommit);
+                }
             }
         }
 
     }
+    
+    @Transactional
+    public long purge(Hook hook) {
+        LOGGER.info("Purging engagement {}", hook.getProjectId());
+        
+        return commitRepository.delete("projectId", hook.getProjectId());
+        
+    }
 
     @Transactional
     public long purge() {
-        LOGGER.info("Purging db");
+        LOGGER.info("Purging activity db");
         return commitRepository.deleteAll();
     }
 
@@ -131,13 +147,14 @@ public class ActivityService {
     public List<Commit> getActivityByUuid(String uuid) {
         return commitRepository.list("engagementUuid", Sort.by("committedDate", Direction.Descending), uuid);
     }
-    
+
     public long getTotalActivityByUuid(String uuid) {
         return commitRepository.count("engagementUuid", uuid);
     }
-    
+
     public List<Commit> getPagedActivityByUuid(String uuid, int page, int pageSize) {
-        return commitRepository.find("engagementUuid", Sort.by("committedDate", Direction.Descending), uuid).page(Page.of(page, pageSize)).list();
+        return commitRepository.find("engagementUuid", Sort.by("committedDate", Direction.Descending), uuid)
+                .page(Page.of(page, pageSize)).list();
     }
 
     public List<Commit> getAll(int page, int pageSize) {
@@ -160,17 +177,31 @@ public class ActivityService {
 
         LOGGER.debug("total commits for project {} {}", projectPathOrId, page.size());
 
-        return page.getResults().stream().filter(e -> !commitFilteredEmails.contains(e.getAuthorEmail())).map(e -> {
+        return page.getResults().stream().filter(e -> filterCommit(e)).collect(Collectors.toList());
+    }
 
-            Optional<String> match = commitFilteredMessages.stream().filter(m -> e.getMessage().startsWith(m))
-                    .findFirst();
-            if (match.isPresent()) {
-                String updated = e.getMessage().replaceFirst(match.get(), "").trim();
-                e.setMessage(updated);
-            }
-            return e;
+    /**
+     * This method will alter the commit message when the message starts with a
+     * value in the commit filter message list
+     * 
+     * @param commit
+     * @return true if author email is not in the email filter list nor does the filter
+     *         message matches an item in the message filter list
+     */
+    private boolean filterCommit(Commit commit) {
+        if (commitFilteredEmails.contains(commit.getAuthorEmail())) {
+            return false;
+        }
 
-        }).filter(e -> !e.getMessage().isBlank()).collect(Collectors.toList());
+        Optional<String> match = commitFilteredMessages.stream().filter(m -> commit.getMessage().startsWith(m))
+                .findFirst();
+        if (match.isPresent()) {
+            LOGGER.trace("Manual refresh " + commit);
+            String updated = commit.getMessage().replaceFirst(match.get(), "").trim();
+            commit.setMessage(updated);
+        }
+        
+        return !commit.getMessage().isBlank();
     }
 
 }
