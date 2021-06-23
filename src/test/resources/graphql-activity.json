@@ -1,0 +1,1 @@
+{"query":"query allCommits {\n  totalCommits\n  allCommits(page: 0, pageSize:10) {\n    id\n    projectId\n    engagementUuid\n    message\n    authorName\n    authoredDate\n  }\n}","variables":null,"operationName":"allCommits"}
