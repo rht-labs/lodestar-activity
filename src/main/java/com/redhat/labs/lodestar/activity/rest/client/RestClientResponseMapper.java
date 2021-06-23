@@ -28,7 +28,7 @@ public class RestClientResponseMapper implements ResponseExceptionMapper<Runtime
         if (response.hasEntity()) {
 
             ByteArrayInputStream is = (ByteArrayInputStream) response.getEntity();
-            byte[] bytes = new byte[is.available()];
+            var bytes = new byte[is.available()];
             is.read(bytes, 0, is.available());
             return new String(bytes);
 

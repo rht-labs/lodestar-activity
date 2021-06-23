@@ -9,7 +9,6 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -32,8 +31,8 @@ import io.quarkus.runtime.StartupEvent;
 public class ActivityService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
     
-    private static String ENGAGEMENT_UUID = "engagementUuid";
-    private static String COMMITTED_DATE = "committedDate";
+    private static String engagementUuid = "engagementUuid";
+    private static String committedDate = "committedDate";
 
     @ConfigProperty(name = "commit.page.size")
     int commitPageSize;
@@ -115,10 +114,6 @@ public class ActivityService {
         return commitRepository.deleteAll();
     }
 
-    /**
-     * Refreshes entire database. TODO this only deletes at the engagement level
-     * (via reload) - not entire db.
-     */
     @Transactional
     public void refresh() {
 
@@ -141,27 +136,27 @@ public class ActivityService {
             commit.setEngagementUuid(e.getUuid());
         }
 
-        long deletedRows = commitRepository.delete(ENGAGEMENT_UUID, e.getUuid());
+        long deletedRows = commitRepository.delete(engagementUuid, e.getUuid());
         LOGGER.debug("Deleted {} rows for engagement {}", deletedRows, e.getUuid());
         commitRepository.persist(fullCommit);
 
     }
 
     public List<Commit> getActivityByUuid(String uuid) {
-        return commitRepository.list(ENGAGEMENT_UUID, Sort.by(COMMITTED_DATE, Direction.Descending), uuid);
+        return commitRepository.list(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid);
     }
 
     public long getTotalActivityByUuid(String uuid) {
-        return commitRepository.count(ENGAGEMENT_UUID, uuid);
+        return commitRepository.count(engagementUuid, uuid);
     }
 
     public List<Commit> getPagedActivityByUuid(String uuid, int page, int pageSize) {
-        return commitRepository.find(ENGAGEMENT_UUID, Sort.by(COMMITTED_DATE, Direction.Descending), uuid)
+        return commitRepository.find(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid)
                 .page(Page.of(page, pageSize)).list();
     }
 
     public List<Commit> getAll(int page, int pageSize) {
-        return commitRepository.findAll(Sort.by(COMMITTED_DATE, Direction.Descending)).page(Page.of(page, pageSize))
+        return commitRepository.findAll(Sort.by(committedDate, Direction.Descending)).page(Page.of(page, pageSize))
                 .list();
     }
 
