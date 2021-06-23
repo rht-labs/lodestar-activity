@@ -21,7 +21,7 @@ public class GitlabTokenFactory implements ClientHeadersFactory {
     public MultivaluedMap<String, String> update(MultivaluedMap<String, String> incomingHeaders,
             MultivaluedMap<String, String> clientOutgoingHeaders) {
         
-        MultivaluedMap<String, String> result = new MultivaluedMapImpl<String, String>();
+        MultivaluedMap<String, String> result = new MultivaluedMapImpl<>();
         result.add("Private-Token", gitLabToken);
 
         return result;

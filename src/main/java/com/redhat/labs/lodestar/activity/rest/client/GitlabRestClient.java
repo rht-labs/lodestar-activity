@@ -8,19 +8,17 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
-//import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import com.redhat.labs.lodestar.activity.model.Commit;
 
-
-//import com.redhat.labs.lodestar.exception.mapper.GitLabServiceResponseMapper;
-
-//@Retry(maxRetries = 5, delay = 2000)
+@Retry(maxRetries = 5, delay = 2000)
 @Path("/api/v4")
 @RegisterRestClient(configKey = "gitlab.api")
-//@RegisterProvider(value = GitLabServiceResponseMapper.class, priority = 50)
+@RegisterProvider(value = RestClientResponseMapper.class, priority = 50)
 @RegisterClientHeaders(GitlabTokenFactory.class)
 @Produces("application/json")
 public interface GitlabRestClient {

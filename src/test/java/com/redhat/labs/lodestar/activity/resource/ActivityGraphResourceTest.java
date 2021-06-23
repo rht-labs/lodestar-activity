@@ -17,13 +17,13 @@ import io.restassured.http.ContentType;
 
 @QuarkusTest
 @QuarkusTestResource(H2DatabaseTestResource.class)
-public class ActivityGraphResourceTest {
+class ActivityGraphResourceTest {
 
     @InjectMock
     ActivityService service;
 
     @Test
-    public void testTotalCommits() {
+    void testTotalCommits() {
         Mockito.when(service.getActivityCount()).thenReturn(3L);
 
         String body = ResourceLoader.load("graphql-activity.json");

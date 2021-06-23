@@ -32,7 +32,7 @@ import io.restassured.path.json.JsonPath;
 @QuarkusTest
 @QuarkusTestResource(H2DatabaseTestResource.class)
 @TestHTTPEndpoint(ActivityResource.class)
-public class ActivityResourceTest {
+class ActivityResourceTest {
 
     @InjectMock
     ActivityService service;
@@ -40,7 +40,7 @@ public class ActivityResourceTest {
     static ObjectMapper om;
 
     @BeforeAll
-    public static void config() {
+    static void config() {
 
         om = new ObjectMapper();
         om.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
@@ -49,7 +49,7 @@ public class ActivityResourceTest {
     }
 
     @Test
-    public void testAllActivityPaged() {
+    void testAllActivityPaged() {
 
         List<Commit> queryResp = new ArrayList<>();
         queryResp.add(Commit.builder().id("1").engagementUuid("abc").build());
@@ -66,7 +66,7 @@ public class ActivityResourceTest {
     }
 
     @Test
-    public void testAllActivityNoPage() {
+    void testAllActivityNoPage() {
         when().get().then().statusCode(400);
 
         given().queryParam("pageSize", 1).queryParam("page", "-1").when().get().then().statusCode(400);
@@ -81,18 +81,18 @@ public class ActivityResourceTest {
     }
 
     @Test
-    public void testRefresh() {
+    void testRefresh() {
         given().contentType(ContentType.JSON).when().put("refresh").then().statusCode(202);
     }
 
     @Test
-    public void testHookNoAuth() {
+    void testHookNoAuth() {
         given().body("{\"customer_name\":\"jello\"}").contentType(ContentType.JSON).when().post("hook").then()
                 .statusCode(401);
     }
 
     @Test
-    public void testHook() throws JsonProcessingException {
+    void testHook() throws JsonProcessingException {
         String body = ResourceLoader.load("hook-push.json");
         
         given().body(body).contentType(ContentType.JSON).header("x-gitlab-token", "t").when().post("hook").then()
@@ -100,14 +100,14 @@ public class ActivityResourceTest {
     }
 
     @Test
-    public void testHookNoChanges() {
+    void testHookNoChanges() {
         Hook hook = Hook.builder().commits(Collections.singletonList(new Commit())).build();
         given().body(hook).contentType(ContentType.JSON).header("x-gitlab-token", "t").when().post("hook").then()
                 .statusCode(200);
     }
 
     @Test
-    public void testHookProjectDeleted() throws JsonProcessingException {
+    void testHookProjectDeleted() throws JsonProcessingException {
         Hook hook = Hook.builder().groupId("1").projectId(1L).eventName("project_deleted")
                 .commits(Collections.singletonList(new Commit())).build();
 

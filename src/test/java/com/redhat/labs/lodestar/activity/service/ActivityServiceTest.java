@@ -22,18 +22,18 @@ import io.quarkus.test.junit.QuarkusTest;
 @QuarkusTest
 @QuarkusTestResource(H2DatabaseTestResource.class)
 @QuarkusTestResource(ExternalApiWireMock.class)
-public class ActivityServiceTest {
+class ActivityServiceTest {
 
     @Inject
     ActivityService service;
 
     @BeforeEach
-    public void init() {
+    void init() {
         service.refresh();
     }
 
     @Test
-    public void testPurge() {
+    void testPurge() {
 
         long deletes = service.purge();
 
@@ -41,14 +41,14 @@ public class ActivityServiceTest {
     }
     
     @Test
-    public void testPurgeProject() {
+    void testPurgeProject() {
         Hook hook = Hook.builder().projectId(13065L).build();
         long deletes = service.purge(hook);
         Assertions.assertEquals(3, deletes);
     }
 
     @Test
-    public void testActivityCount() {
+    void testActivityCount() {
 
         long activity = service.getActivityCount();
 
@@ -56,7 +56,7 @@ public class ActivityServiceTest {
     }
 
     @Test
-    public void testHook() {
+    void testHook() {
 
         List<Commit> queryResp = new ArrayList<>();
         GitlabProject glp = GitlabProject.builder().pathWithNamespace("main/store/Hats/Cap/iac").build();
@@ -71,17 +71,17 @@ public class ActivityServiceTest {
     }
 
     @Test
-    public void testActivityCountForUuid() {
+    void testActivityCountForUuid() {
         Assertions.assertEquals(3, service.getTotalActivityByUuid("cb570945-a209-40ba-9e42-63a7993baf4d"));
     }
 
     @Test
-    public void testPagedActivity() {
+    void testPagedActivity() {
         Assertions.assertEquals(2, service.getPagedActivityByUuid("cb570945-a209-40ba-9e42-63a7993baf4d", 0, 2).size());
     }
 
     @Test
-    public void testAllCommitsForUuidSuccess() {
+    void testAllCommitsForUuidSuccess() {
 
         List<Commit> activity = service.getActivityByUuid("cb570945-a209-40ba-9e42-63a7993baf4d");
         Assertions.assertEquals(3, activity.size());
@@ -89,7 +89,7 @@ public class ActivityServiceTest {
     }
 
     @Test
-    public void testGetAllPaged() {
+    void testGetAllPaged() {
         Assertions.assertEquals(1, service.getAll(1, 2).size());
     }
 

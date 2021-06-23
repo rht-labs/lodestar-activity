@@ -22,7 +22,7 @@
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     <sonar.project.key>rht-labs_lodestar-activity</sonar.project.key>
     <sonar.organization>rht-labs</sonar.organization>
-    <sonar.jacoco.reportPath>target/jacoco-quarkus.exec</sonar.jacoco.reportPath>
+    <sonar.coverage.jacoco.xmlReportPaths>./target/jacoco-report/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -45,6 +45,10 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest-client-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

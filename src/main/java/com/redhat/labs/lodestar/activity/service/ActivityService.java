@@ -31,6 +31,9 @@ import io.quarkus.runtime.StartupEvent;
 @ApplicationScoped
 public class ActivityService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
+    
+    private static String ENGAGEMENT_UUID = "engagementUuid";
+    private static String COMMITTED_DATE = "committedDate";
 
     @ConfigProperty(name = "commit.page.size")
     int commitPageSize;
@@ -85,9 +88,9 @@ public class ActivityService {
             Optional<Commit> entity = commitRepository.find("id", commit.getId()).firstResultOptional();
             if (entity.isEmpty()) {
                 LOGGER.debug("Pid {} Commit {}", hook.getProjectId(), commit.getId());
-                Commit fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false); // TODO 404?
+                var fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false);
                 if(commit.didFileChange(engagementFile) && filterCommit(fullCommit)) {
-                    Engagement engagement = engagementRestClient.getEngagement(hook.getCustomerName(),
+                    var engagement = engagementRestClient.getEngagement(hook.getCustomerName(),
                             hook.getEngagementName(), false);
                     fullCommit.setEngagementUuid(engagement.getUuid());
                     fullCommit.setProjectId(hook.getProjectId());
@@ -123,7 +126,7 @@ public class ActivityService {
 
         LOGGER.debug("Engagement count {}", engagements.size());
 
-        engagements.parallelStream().forEach(e -> reloadEngagement(e));
+        engagements.parallelStream().forEach(this::reloadEngagement);
     }
 
     @Transactional
@@ -138,27 +141,27 @@ public class ActivityService {
             commit.setEngagementUuid(e.getUuid());
         }
 
-        long deletedRows = commitRepository.delete("engagementUuid", e.getUuid());
+        long deletedRows = commitRepository.delete(ENGAGEMENT_UUID, e.getUuid());
         LOGGER.debug("Deleted {} rows for engagement {}", deletedRows, e.getUuid());
         commitRepository.persist(fullCommit);
 
     }
 
     public List<Commit> getActivityByUuid(String uuid) {
-        return commitRepository.list("engagementUuid", Sort.by("committedDate", Direction.Descending), uuid);
+        return commitRepository.list(ENGAGEMENT_UUID, Sort.by(COMMITTED_DATE, Direction.Descending), uuid);
     }
 
     public long getTotalActivityByUuid(String uuid) {
-        return commitRepository.count("engagementUuid", uuid);
+        return commitRepository.count(ENGAGEMENT_UUID, uuid);
     }
 
     public List<Commit> getPagedActivityByUuid(String uuid, int page, int pageSize) {
-        return commitRepository.find("engagementUuid", Sort.by("committedDate", Direction.Descending), uuid)
+        return commitRepository.find(ENGAGEMENT_UUID, Sort.by(COMMITTED_DATE, Direction.Descending), uuid)
                 .page(Page.of(page, pageSize)).list();
     }
 
     public List<Commit> getAll(int page, int pageSize) {
-        return commitRepository.findAll(Sort.by("committedDate", Direction.Descending)).page(Page.of(page, pageSize))
+        return commitRepository.findAll(Sort.by(COMMITTED_DATE, Direction.Descending)).page(Page.of(page, pageSize))
                 .list();
     }
 
@@ -170,14 +173,14 @@ public class ActivityService {
         PagedResults<Commit> page = new PagedResults<>(commitPageSize);
 
         while (page.hasMore()) {
-            Response response = gitlabRestClient.getCommitLog(projectPathOrId, commitPageSize, page.getNumber());
+            var response = gitlabRestClient.getCommitLog(projectPathOrId, commitPageSize, page.getNumber());
             page.update(response, new GenericType<List<Commit>>() {
             });
         }
 
         LOGGER.debug("total commits for project {} {}", projectPathOrId, page.size());
 
-        return page.getResults().stream().filter(e -> filterCommit(e)).collect(Collectors.toList());
+        return page.getResults().stream().filter(this::filterCommit).collect(Collectors.toList());
     }
 
     /**
@@ -196,7 +199,6 @@ public class ActivityService {
         Optional<String> match = commitFilteredMessages.stream().filter(m -> commit.getMessage().startsWith(m))
                 .findFirst();
         if (match.isPresent()) {
-            LOGGER.trace("Manual refresh " + commit);
             String updated = commit.getMessage().replaceFirst(match.get(), "").trim();
             commit.setMessage(updated);
         }
