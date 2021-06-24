@@ -68,8 +68,7 @@ spec:
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       volumes:
-      - emptyDir:
-          medium: ""
+      - emptyDir: {}
         name: "{{ .Values.name }}-data"
   triggers:
   - imageChangeParams:
@@ -80,6 +79,5 @@ spec:
         kind: ImageStreamTag
         name: postgresql:{{ .Values.db.version }}
         namespace: openshift
-      lastTriggeredImage: ""
     type: ImageChange
   - type: ConfigChange
