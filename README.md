@@ -1,65 +1,51 @@
-# lodestar-activity project
+# LodeStar Activity
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+This project provides activity data for LodeStar.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+The API is document via swagger and is available at `/q/swagger-ui`
 
-## Running the application in dev mode
+An experimental GraphQL deployment is available at `/q/graphql-ui` and `graphql/schema.graphql`
+
+----
+
+## Configuration
+
+The following environment variables are available:
+
+### Logging
+| Name | Default | Description|
+|------|---------|------------|
+| ENGAGEMENT_API_URL | http://git-api:8080 | The url too get engagement data |
+| GITLAB_API_URL | https://acmegit.com | The url to Gitlab |
+| GITLAB_TOKEN | t | The Access Token for Gitlab |
+| WEBHOOK_TOKEN | t | Shared secret for Gitlab Webhooks | 
+| LODESTAR_LOGGING | DEBUG | Logging to the base source package | 
+| COMMIT_FILTERED_MESSAGE_LIST | anual_refresh | A list of messages to filter from activity |
+| COMMIT_FILTERED_EMAIL_LIST | bot@bot.com | A list of emails to filter from activity | 
+| POSTGRESQL_USER | | The db user | 
+| POSTGRESQL_PASSWORD | | The db password |
+| POSTGRESQL_URL | | The jdbc url to the db |
+
+## Deployment
+
+See the deployment [readme](./deployment) for information on deploying to a OpenShift environment
+
+## Running the application locally
+
+A postgres database is needed for development. See the deployment [readme](./deployment) for instructions to spin up a docker postresql container 
+
+```
+cd deployment
+docker-compose up
+```
 
 You can run your application in dev mode that enables live coding using:
-```shell script
-./mvnw compile quarkus:dev
+
+```
+export GITLAB_API_URL=https://gitlab.com/ 
+export GITLAB_TOKEN=token
+export ENGAGEMENT_API_URL=https://git-api.test.com 
+mvn quarkus:dev
 ```
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
-
-## Packaging and running the application
-
-The application can be packaged using:
-```shell script
-./mvnw package
-```
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
-```
-
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
-./mvnw package -Pnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./mvnw package -Pnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/lodestar-artifacts-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.html.
-
-## Related guides
-
-- RESTEasy JAX-RS ([guide](https://quarkus.io/guides/rest-json)): REST endpoint framework implementing JAX-RS and more
-
-## Provided examples
-
-### RESTEasy JAX-RS example
-
-REST is easy peasy with this Hello World RESTEasy resource.
-
-[Related guide section...](https://quarkus.io/guides/getting-started#the-jax-rs-resources)
-
-### RESTEasy JSON serialisation using Jackson
-
-This example demonstrate RESTEasy JSON serialisation by letting you list, add and remove quark types from a list. Quarked!
-
-[Related guide section...](https://quarkus.io/guides/rest-json#creating-your-first-json-rest-service)
-
