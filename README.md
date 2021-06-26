@@ -32,12 +32,16 @@ See the deployment [readme](./deployment) for information on deploying to a Open
 
 ## Running the application locally
 
-A postgres database is needed for development. See the deployment [readme](./deployment) for instructions to spin up a docker postresql container 
+### Postgresql 
+
+A postgres database is needed for development. To spin up a docker postresql container run the following
 
 ```
 cd deployment
 docker-compose up
 ```
+
+### Local Dev
 
 You can run your application in dev mode that enables live coding using:
 
