@@ -43,8 +43,8 @@ public class ActivityService {
     @ConfigProperty(name = "commit.filter.list")
     List<String> commitFilteredEmails;
     
-    @ConfigProperty(name = "engagement.file")
-    String engagementFile;
+    @ConfigProperty(name = "commit.watch.files")
+    List<String> commitedFilesToWatch;
 
     @Inject
     @RestClient
@@ -88,7 +88,7 @@ public class ActivityService {
             if (entity.isEmpty()) {
                 LOGGER.debug("Pid {} Commit {}", hook.getProjectId(), commit.getId());
                 var fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false);
-                if(commit.didFileChange(engagementFile) && filterCommit(fullCommit)) {
+                if(commit.didFileChange(commitedFilesToWatch) && filterCommit(fullCommit)) {
                     var engagement = engagementRestClient.getEngagement(hook.getCustomerName(),
                             hook.getEngagementName(), false);
                     fullCommit.setEngagementUuid(engagement.getUuid());

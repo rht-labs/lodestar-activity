@@ -2,7 +2,9 @@ package com.redhat.labs.lodestar.activity.model;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -52,8 +54,13 @@ public class Commit {
     private Long projectId;
     private String engagementUuid;
     
-    public boolean didFileChange(String fileName) {
-        return added.contains(fileName) || modified.contains(fileName) || removed.contains(fileName);
+    public boolean didFileChange(List<String> fileName) {
+        Set<String> changedFiles = new HashSet<>(added);
+        changedFiles.addAll(modified);
+        changedFiles.addAll(removed);
+        
+        return changedFiles.stream().filter(fileName::contains).count() > 0;
+        
     }
 
 }
