@@ -1,17 +1,5 @@
 package com.redhat.labs.lodestar.activity.resource;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,17 +8,24 @@ import com.redhat.labs.lodestar.activity.mock.ResourceLoader;
 import com.redhat.labs.lodestar.activity.model.Commit;
 import com.redhat.labs.lodestar.activity.model.Hook;
 import com.redhat.labs.lodestar.activity.service.ActivityService;
-
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.h2.H2DatabaseTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
 
 @QuarkusTest
-@QuarkusTestResource(H2DatabaseTestResource.class)
 @TestHTTPEndpoint(ActivityResource.class)
 class ActivityResourceTest {
 

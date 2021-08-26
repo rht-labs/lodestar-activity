@@ -59,7 +59,7 @@ public class Commit {
         changedFiles.addAll(modified);
         changedFiles.addAll(removed);
         
-        return changedFiles.stream().filter(fileName::contains).count() > 0;
+        return changedFiles.stream().anyMatch(fileName::contains);
         
     }
 

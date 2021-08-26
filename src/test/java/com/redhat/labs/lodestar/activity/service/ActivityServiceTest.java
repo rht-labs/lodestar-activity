@@ -1,26 +1,22 @@
 package com.redhat.labs.lodestar.activity.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.inject.Inject;
-
+import com.redhat.labs.lodestar.activity.mock.ExternalApiWireMock;
+import com.redhat.labs.lodestar.activity.model.Commit;
+import com.redhat.labs.lodestar.activity.model.Engagement;
+import com.redhat.labs.lodestar.activity.model.GitlabProject;
+import com.redhat.labs.lodestar.activity.model.Hook;
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.redhat.labs.lodestar.activity.mock.ExternalApiWireMock;
-import com.redhat.labs.lodestar.activity.model.Commit;
-import com.redhat.labs.lodestar.activity.model.GitlabProject;
-import com.redhat.labs.lodestar.activity.model.Hook;
-
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.h2.H2DatabaseTestResource;
-import io.quarkus.test.junit.QuarkusTest;
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @QuarkusTest
-@QuarkusTestResource(H2DatabaseTestResource.class)
 @QuarkusTestResource(ExternalApiWireMock.class)
 class ActivityServiceTest {
 
@@ -29,7 +25,8 @@ class ActivityServiceTest {
 
     @BeforeEach
     void init() {
-        service.refresh();
+        Engagement e = Engagement.builder().uuid("cb570945-a209-40ba-9e42-63a7993baf4d").projectId(13065).build();
+        service.reloadEngagement(e);
     }
 
     @Test
@@ -85,11 +82,14 @@ class ActivityServiceTest {
 
         List<Commit> activity = service.getActivityByUuid("cb570945-a209-40ba-9e42-63a7993baf4d");
         Assertions.assertEquals(3, activity.size());
-
     }
 
     @Test
     void testGetAllPaged() {
+        long activity = service.getActivityCount();
+        Assertions.assertEquals(3L, activity);
+
+        //0 based index
         Assertions.assertEquals(1, service.getAll(1, 2).size());
     }
 

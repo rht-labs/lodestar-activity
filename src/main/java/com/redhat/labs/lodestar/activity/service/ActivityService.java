@@ -1,38 +1,37 @@
 package com.redhat.labs.lodestar.activity.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.transaction.Transactional;
-import javax.ws.rs.core.GenericType;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.redhat.labs.lodestar.activity.model.Commit;
 import com.redhat.labs.lodestar.activity.model.Engagement;
 import com.redhat.labs.lodestar.activity.model.Hook;
 import com.redhat.labs.lodestar.activity.model.pagination.PagedResults;
 import com.redhat.labs.lodestar.activity.rest.client.EngagementApiRestClient;
 import com.redhat.labs.lodestar.activity.rest.client.GitlabRestClient;
-
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.panache.common.Sort.Direction;
 import io.quarkus.runtime.StartupEvent;
+import io.quarkus.vertx.ConsumeEvent;
+import io.vertx.mutiny.core.eventbus.EventBus;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+import javax.ws.rs.core.GenericType;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ActivityService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityService.class);
     
-    private static String engagementUuid = "engagementUuid";
-    private static String committedDate = "committedDate";
+    private static final String engagementUuid = "engagementUuid";
+    private static final String committedDate = "committedDate";
 
     @ConfigProperty(name = "commit.page.size")
     int commitPageSize;
@@ -44,7 +43,7 @@ public class ActivityService {
     List<String> commitFilteredEmails;
     
     @ConfigProperty(name = "commit.watch.files")
-    List<String> commitedFilesToWatch;
+    List<String> committedFilesToWatch;
 
     @Inject
     @RestClient
@@ -57,10 +56,13 @@ public class ActivityService {
     @Inject
     CommitRepository commitRepository;
 
+    @Inject
+    EventBus bus;
+
     /**
      * If there is no data in the activity db go get it all.
      * 
-     * @param ev
+     * @param ev start
      */
     void onStart(@Observes StartupEvent ev) {
         long count = commitRepository.count();
@@ -69,9 +71,6 @@ public class ActivityService {
         if (count == 0) {
             refresh();
         }
-        
-        count = commitRepository.count();
-        LOGGER.debug("There are now {} commits in the activity db.", count);
     }
 
     /**
@@ -79,7 +78,7 @@ public class ActivityService {
      * commits and adds them to the db if the commit is not already there (does not
      * do updates - if update is needed refresh the engagement).
      * 
-     * @param hook
+     * @param hook webhook
      */
     @Transactional
     public void addNewCommits(Hook hook) {
@@ -88,7 +87,7 @@ public class ActivityService {
             if (entity.isEmpty()) {
                 LOGGER.debug("Pid {} Commit {}", hook.getProjectId(), commit.getId());
                 var fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false);
-                if(commit.didFileChange(commitedFilesToWatch) && filterCommit(fullCommit)) {
+                if(commit.didFileChange(committedFilesToWatch) && filterCommit(fullCommit)) {
                     var engagement = engagementRestClient.getEngagement(hook.getCustomerName(),
                             hook.getEngagementName(), false);
                     fullCommit.setEngagementUuid(engagement.getUuid());
@@ -114,20 +113,19 @@ public class ActivityService {
         return commitRepository.deleteAll();
     }
 
-    @Transactional
     public void refresh() {
 
         List<Engagement> engagements = engagementRestClient.getAllEngagements(false, false, false);
 
         LOGGER.debug("Engagement count {}", engagements.size());
 
-        engagements.parallelStream().forEach(this::reloadEngagement);
+        engagements.parallelStream().forEach(ev -> bus.publish("refresh.engagement.event", ev));
     }
 
+    @ConsumeEvent(value = "refresh.engagement.event", blocking = true)
     @Transactional
     public void reloadEngagement(Engagement e) {
         LOGGER.debug("Reloading {}", e);
-
         List<Commit> fullCommit = getCommitLog(String.valueOf(e.getProjectId()));
 
         for (Commit commit : fullCommit) {
@@ -156,7 +154,7 @@ public class ActivityService {
     }
 
     public List<Commit> getAll(int page, int pageSize) {
-        return commitRepository.findAll(Sort.by(committedDate, Direction.Descending)).page(Page.of(page, pageSize))
+        return commitRepository.findAll(Sort.by(committedDate, Direction.Descending).and("id")).page(Page.of(page, pageSize))
                 .list();
     }
 

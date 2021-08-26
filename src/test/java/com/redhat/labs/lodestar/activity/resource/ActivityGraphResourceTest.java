@@ -1,22 +1,17 @@
 package com.redhat.labs.lodestar.activity.resource;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import com.redhat.labs.lodestar.activity.mock.ResourceLoader;
 import com.redhat.labs.lodestar.activity.service.ActivityService;
-
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.h2.H2DatabaseTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.http.ContentType;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 
 @QuarkusTest
-@QuarkusTestResource(H2DatabaseTestResource.class)
 class ActivityGraphResourceTest {
 
     @InjectMock
