@@ -22,7 +22,7 @@ public class Hook {
     private GitlabProject project;
     private String groupId;
 
-    public boolean didFileChange(String fileName) {
+    public boolean didFileChange(List<String> fileName) {
         for (Commit commit : commits) {
             if (commit.didFileChange(fileName)) {
                 return true;

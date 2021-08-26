@@ -2,6 +2,7 @@ package com.redhat.labs.lodestar.activity.resource;
 
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -40,8 +41,13 @@ public class ActivityResource {
     @ConfigProperty(name = "gitlab.webhook.token")
     String webhookToken;
     
-    @ConfigProperty(name = "engagement.file")
-    String engagementFile;
+    @ConfigProperty(name = "commit.watch.files")
+    List<String> committedFilesToWatch;
+
+    @PostConstruct
+    void trimToken() {
+        webhookToken = webhookToken.trim();
+    }
 
     @GET
     @Path("/uuid/{uuid}")
@@ -99,7 +105,8 @@ public class ActivityResource {
             return Response.status(Status.NO_CONTENT).build();
         }
         
-        if(hook.didFileChange(engagementFile)) {
+        if(hook.didFileChange(committedFilesToWatch)) {
+            LOGGER.debug("Activity spotted for {}", hook.getEngagementName());
             activityService.addNewCommits(hook);
             return Response.accepted().build();
         }
