@@ -2,11 +2,7 @@ package com.redhat.labs.lodestar.activity.rest.client;
 
 import java.util.List;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -14,6 +10,7 @@ import com.redhat.labs.lodestar.activity.model.Engagement;
 
 @RegisterRestClient(configKey = "engagement.api")
 @Produces("application/json")
+@Consumes("application/json")
 public interface EngagementApiRestClient {
 
     @GET
