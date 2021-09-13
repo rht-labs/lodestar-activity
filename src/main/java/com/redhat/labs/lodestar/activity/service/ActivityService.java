@@ -21,6 +21,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.GenericType;
 import java.util.List;
 import java.util.Optional;
@@ -140,8 +141,21 @@ public class ActivityService {
 
     }
 
+    public List<Commit> getRecentPerEngagement(int page, int pageSize) {
+        return commitRepository.findRecentPerEngagement(page, pageSize);
+    }
+
     public List<Commit> getActivityByUuid(String uuid) {
         return commitRepository.list(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid);
+    }
+
+    public Commit getLastActivity(String uuid) {
+        List<Commit> activity = getActivityByUuid(uuid);
+        if(activity.isEmpty()) {
+            throw new WebApplicationException(404);
+        }
+
+        return activity.get(0);
     }
 
     public long getTotalActivityByUuid(String uuid) {
@@ -167,7 +181,7 @@ public class ActivityService {
 
         while (page.hasMore()) {
             var response = gitlabRestClient.getCommitLog(projectPathOrId, commitPageSize, page.getNumber());
-            page.update(response, new GenericType<List<Commit>>() {
+            page.update(response, new GenericType<>() {
             });
         }
 

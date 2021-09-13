@@ -61,13 +61,6 @@ class ActivityResourceTest {
     }
 
     @Test
-    void testAllActivityNoPage() {
-        when().get().then().statusCode(400);
-
-        given().queryParam("pageSize", 1).queryParam("page", "-1").when().get().then().statusCode(400);
-    }
-
-    @Test
     void testEngagementActivity() {
         when().get("/uuid/abc").then().statusCode(200);
 

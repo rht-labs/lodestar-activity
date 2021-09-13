@@ -1,19 +1,12 @@
 package com.redhat.labs.lodestar.activity.resource;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -34,6 +27,8 @@ import com.redhat.labs.lodestar.activity.service.ActivityService;
 @Consumes(MediaType.APPLICATION_JSON)
 public class ActivityResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityResource.class);
+    private static final String ACCESS_CONTROL_EXPOSE_HEADER = "Access-Control-Expose-Headers";
+    private static final String LAST_UPDATE_HEADER = "last-update";
 
     @Inject
     ActivityService activityService;
@@ -69,12 +64,17 @@ public class ActivityResource {
         return response;
     }
 
-    @GET
-    public Response getAllActivity(@QueryParam("page") int page, @QueryParam("pageSize") int pageSize) {
+    @HEAD
+    @Path("{uuid}")
+    public Response getLastUpdate(@PathParam("uuid") String uuid) {
+        Commit activity = activityService.getLastActivity(uuid);
 
-        if (pageSize < 1 || page < 0) {
-            return Response.status(Status.BAD_REQUEST).entity("Invalid Page Request").build();
-        }
+        return Response.ok().header(LAST_UPDATE_HEADER, activity.getCommittedDate().toInstant())
+                .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
+    }
+
+    @GET
+    public Response getAllActivity(@DefaultValue("0") @QueryParam("page") int page, @DefaultValue("100") @QueryParam("pageSize") int pageSize) {
 
         List<Commit> activity = activityService.getAll(page, pageSize);
         long totalActivity = activityService.getActivityCount();
@@ -82,6 +82,12 @@ public class ActivityResource {
         return Response.ok(activity).header("x-page", page).header("x-per-page", pageSize)
                 .header("x-total-activity", totalActivity).header("x-total-pages", (totalActivity / pageSize) + 1)
                 .build();
+    }
+
+    @GET
+    @Path("latest")
+    public Response getActivityPerEngagement(@DefaultValue("0") @QueryParam("page") int page, @DefaultValue("100") @QueryParam("pageSize") int pageSize) {
+        return Response.ok(activityService.getRecentPerEngagement(page, pageSize)).build();
     }
 
     @POST
