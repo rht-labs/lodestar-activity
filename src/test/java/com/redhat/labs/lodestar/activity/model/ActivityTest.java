@@ -6,9 +6,12 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
-public class CommitTest {
+@QuarkusTest
+class ActivityTest {
     
     @Test
     void testWatchedFiles() {
@@ -21,7 +24,7 @@ public class CommitTest {
         List<String> modified = new ArrayList<>();
         Collections.addAll(modified, "engagement.json");
         
-        Commit nothing = Commit.builder().build();
+        Activity nothing = Activity.builder().build();
         assertFalse(nothing.didFileChange(expected));
         
         nothing.setRemoved(none);
@@ -33,7 +36,7 @@ public class CommitTest {
         List<String> one = new ArrayList<>();
         one.add("participants.json");
         
-        Commit something = Commit.builder().added(one).build();
+        Activity something = Activity.builder().added(one).build();
         
         assertTrue(something.didFileChange(expected));
         

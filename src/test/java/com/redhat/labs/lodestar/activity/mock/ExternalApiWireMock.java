@@ -51,7 +51,7 @@ public class ExternalApiWireMock implements QuarkusTestResourceLifecycleManager 
         
         body = ResourceLoader.load("engagement.json");
         
-        stubFor(get(urlEqualTo("/api/v2/engagements/customer/Hats/Cap?includeStatus=false")).willReturn(aResponse()
+        stubFor(get(urlEqualTo("/api/v2/engagements/customer/Hats/engagement/Cap?includeStatus=false")).willReturn(aResponse()
                 .withHeader("Content-Type",  "application/json")
                 .withBody(body)
                 ));

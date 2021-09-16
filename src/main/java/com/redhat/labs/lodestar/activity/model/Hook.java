@@ -18,12 +18,12 @@ public class Hook {
     private String objectKind;
     private String eventName;
     private Long projectId;
-    private List<Commit> commits;
+    private List<Activity> commits;
     private GitlabProject project;
     private String groupId;
 
     public boolean didFileChange(List<String> fileName) {
-        for (Commit commit : commits) {
+        for (Activity commit : commits) {
             if (commit.didFileChange(fileName)) {
                 return true;
             }
@@ -45,12 +45,6 @@ public class Hook {
     @JsonIgnore
     public boolean wasProjectDeleted() {
         return "project_deleted".equals(eventName);
-    }
-
-    @JsonIgnore
-    public boolean containsAnyMessage(List<String> messages) {
-        return messages.stream().anyMatch(message -> commits.stream()
-                .anyMatch(c -> null != c.getMessage() && c.getMessage().startsWith(message)));
     }
 
 }

@@ -13,5 +13,5 @@ public class Engagement {
 
     private String uuid;
     private long projectId;
-    
+    private String region;
 }

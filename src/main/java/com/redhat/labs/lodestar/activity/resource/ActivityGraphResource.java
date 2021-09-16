@@ -9,7 +9,7 @@ import org.eclipse.microprofile.graphql.GraphQLApi;
 import org.eclipse.microprofile.graphql.Name;
 import org.eclipse.microprofile.graphql.Query;
 
-import com.redhat.labs.lodestar.activity.model.Commit;
+import com.redhat.labs.lodestar.activity.model.Activity;
 import com.redhat.labs.lodestar.activity.service.ActivityService;
 
 @GraphQLApi
@@ -26,7 +26,7 @@ public class ActivityGraphResource {
     
     @Query("allCommits")
     @Description("Get all commits from all projects")
-    public List<Commit> getAllActivity(@Name("page") int page, @Name("pageSize") int pageSize) {
+    public List<Activity> getAllActivity(@Name("page") int page, @Name("pageSize") int pageSize) {
         return activityService.getAll(page, pageSize);
     }
 
@@ -38,7 +38,7 @@ public class ActivityGraphResource {
     
     @Query
     @Description("Get a list of activity from a single project by uuid")
-    public List<Commit> getActivityForEngagement(@Name("uuid") String engagementUuid) {
+    public List<Activity> getActivityForEngagement(@Name("uuid") String engagementUuid) {
         return activityService.getActivityByUuid(engagementUuid);
     }
 

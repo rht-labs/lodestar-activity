@@ -1,6 +1,6 @@
 package com.redhat.labs.lodestar.activity.service;
 
-import com.redhat.labs.lodestar.activity.model.Commit;
+import com.redhat.labs.lodestar.activity.model.Activity;
 import com.redhat.labs.lodestar.activity.model.Engagement;
 import com.redhat.labs.lodestar.activity.model.Hook;
 import com.redhat.labs.lodestar.activity.model.pagination.PagedResults;
@@ -25,6 +25,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.GenericType;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -55,7 +56,7 @@ public class ActivityService {
     EngagementApiRestClient engagementRestClient;
 
     @Inject
-    CommitRepository commitRepository;
+    ActivityRepository commitRepository;
 
     @Inject
     EventBus bus;
@@ -83,8 +84,8 @@ public class ActivityService {
      */
     @Transactional
     public void addNewCommits(Hook hook) {
-        for (Commit commit : hook.getCommits()) {
-            Optional<Commit> entity = commitRepository.find("id", commit.getId()).firstResultOptional();
+        for (Activity commit : hook.getCommits()) {
+            Optional<Activity> entity = commitRepository.find("id", commit.getId()).firstResultOptional();
             if (entity.isEmpty()) {
                 LOGGER.debug("Pid {} Commit {}", hook.getProjectId(), commit.getId());
                 var fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false);
@@ -93,6 +94,7 @@ public class ActivityService {
                             hook.getEngagementName(), false);
                     fullCommit.setEngagementUuid(engagement.getUuid());
                     fullCommit.setProjectId(hook.getProjectId());
+                    fullCommit.setRegion(engagement.getRegion());
                     commitRepository.persist(fullCommit);
                 }
             }
@@ -103,9 +105,7 @@ public class ActivityService {
     @Transactional
     public long purge(Hook hook) {
         LOGGER.info("Purging engagement {}", hook.getProjectId());
-        
         return commitRepository.delete("projectId", hook.getProjectId());
-        
     }
 
     @Transactional
@@ -127,12 +127,13 @@ public class ActivityService {
     @Transactional
     public void reloadEngagement(Engagement e) {
         LOGGER.debug("Reloading {}", e);
-        List<Commit> fullCommit = getCommitLog(String.valueOf(e.getProjectId()));
+        List<Activity> fullCommit = getCommitLog(String.valueOf(e.getProjectId()));
 
-        for (Commit commit : fullCommit) {
+        for (Activity commit : fullCommit) {
             LOGGER.trace("c {}", commit);
             commit.setProjectId(e.getProjectId());
             commit.setEngagementUuid(e.getUuid());
+            commit.setRegion(e.getRegion());
         }
 
         long deletedRows = commitRepository.delete(engagementUuid, e.getUuid());
@@ -141,16 +142,20 @@ public class ActivityService {
 
     }
 
-    public List<Commit> getRecentPerEngagement(int page, int pageSize) {
-        return commitRepository.findRecentPerEngagement(page, pageSize);
+    public List<String> getMostRecentlyUpdateEngagements(int page, int pageSize) {
+        return commitRepository.findMostRecentlyUpdatedEngagements(page, pageSize);
     }
 
-    public List<Commit> getActivityByUuid(String uuid) {
+    public List<String> getMostRecentlyUpdateEngagements(int page, int pageSize, Set<String> regions) {
+        return commitRepository.findMostRecentlyUpdatedEngagementsRegion(page, pageSize, regions);
+    }
+
+    public List<Activity> getActivityByUuid(String uuid) {
         return commitRepository.list(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid);
     }
 
-    public Commit getLastActivity(String uuid) {
-        List<Commit> activity = getActivityByUuid(uuid);
+    public Activity getLastActivity(String uuid) {
+        List<Activity> activity = getActivityByUuid(uuid);
         if(activity.isEmpty()) {
             throw new WebApplicationException(404);
         }
@@ -162,12 +167,12 @@ public class ActivityService {
         return commitRepository.count(engagementUuid, uuid);
     }
 
-    public List<Commit> getPagedActivityByUuid(String uuid, int page, int pageSize) {
+    public List<Activity> getPagedActivityByUuid(String uuid, int page, int pageSize) {
         return commitRepository.find(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid)
                 .page(Page.of(page, pageSize)).list();
     }
 
-    public List<Commit> getAll(int page, int pageSize) {
+    public List<Activity> getAll(int page, int pageSize) {
         return commitRepository.findAll(Sort.by(committedDate, Direction.Descending).and("id")).page(Page.of(page, pageSize))
                 .list();
     }
@@ -176,8 +181,8 @@ public class ActivityService {
         return commitRepository.count();
     }
 
-    private List<Commit> getCommitLog(String projectPathOrId) {
-        PagedResults<Commit> page = new PagedResults<>(commitPageSize);
+    private List<Activity> getCommitLog(String projectPathOrId) {
+        PagedResults<Activity> page = new PagedResults<>(commitPageSize);
 
         while (page.hasMore()) {
             var response = gitlabRestClient.getCommitLog(projectPathOrId, commitPageSize, page.getNumber());
@@ -194,11 +199,11 @@ public class ActivityService {
      * This method will alter the commit message when the message starts with a
      * value in the commit filter message list
      * 
-     * @param commit
+     * @param commit the commit
      * @return true if author email is not in the email filter list nor does the filter
      *         message matches an item in the message filter list
      */
-    private boolean filterCommit(Commit commit) {
+    private boolean filterCommit(Activity commit) {
         if (commitFilteredEmails.contains(commit.getAuthorEmail())) {
             return false;
         }
