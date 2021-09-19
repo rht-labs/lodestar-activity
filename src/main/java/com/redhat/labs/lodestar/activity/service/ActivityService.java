@@ -90,8 +90,8 @@ public class ActivityService {
                 LOGGER.debug("Pid {} Commit {}", hook.getProjectId(), commit.getId());
                 var fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false);
                 if(commit.didFileChange(committedFilesToWatch) && filterCommit(fullCommit)) {
-                    var engagement = engagementRestClient.getEngagement(hook.getCustomerName(),
-                            hook.getEngagementName(), false);
+                    LOGGER.debug("Activity for {} {}", hook.getCustomerName(), hook.getEngagementName());
+                    var engagement = engagementRestClient.getEngagement(hook.getProjectId());
                     fullCommit.setEngagementUuid(engagement.getUuid());
                     fullCommit.setProjectId(hook.getProjectId());
                     fullCommit.setRegion(engagement.getRegion());

@@ -68,7 +68,7 @@ class ActivityServiceTest {
         List<Activity> queryResp = new ArrayList<>();
         GitlabProject glp = GitlabProject.builder().pathWithNamespace("main/store/Hats/Cap/iac").build();
         queryResp.add(Activity.builder().id("1").projectId(1L).engagementUuid("abc").build());
-        queryResp.add(Activity.builder().id("2").modified(Collections.singletonList("engagement.json")).projectId(1L)
+        queryResp.add(Activity.builder().id("2").modified(Collections.singletonList("engagement/engagement.json")).projectId(1L)
                 .engagementUuid("abc").build());
 
         Hook hook = Hook.builder().projectId(1L).project(glp).commits(queryResp).build();
