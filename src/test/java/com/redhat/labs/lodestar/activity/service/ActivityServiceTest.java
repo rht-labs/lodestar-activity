@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.WebApplicationException;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,7 +93,7 @@ class ActivityServiceTest {
         Activity activity = service.getLastActivity("cb570945-a209-40ba-9e42-63a7993baf4d");
 
         assertNotNull(activity);
-        assertEquals("2020-04-01T17:42:42-07:00", activity.getCommittedDate().toString());
+        assertEquals(OffsetDateTime.parse("2020-04-01T17:42:42-07:00").toInstant(), activity.getCommittedDate().toInstant());
     }
 
     @Test
@@ -170,7 +171,7 @@ class ActivityServiceTest {
 
         RecentCommit r = result.get(0);
         assertEquals("cb570945-a209-40ba-9e42-63a7993baf4d", r.getEngagementUuid());
-        assertEquals(OffsetDateTime.parse("2020-04-01T17:42:42-07:00"), r.getCommittedDate());
+        assertEquals(OffsetDateTime.parse("2020-04-01T17:42:42-07:00").atZoneSameInstant(ZoneId.of("Z")), r.getCommittedDate().atZoneSameInstant(ZoneId.of("Z")));
     }
 
     @Test
