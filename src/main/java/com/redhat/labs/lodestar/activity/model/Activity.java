@@ -26,11 +26,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(indexes = {
-        @Index(columnList = "projectId"), @Index(columnList = "engagementUuid")
-})
 @JsonIgnoreProperties(value = { "added", "modified", "removed" }, allowSetters = true)
-public class Commit {
+public class Activity {
     
     @Builder.Default @Transient private List<String> added = new ArrayList<>();
     @Builder.Default @Transient private List<String> modified = new ArrayList<>();
@@ -53,6 +50,7 @@ public class Commit {
     
     private Long projectId;
     private String engagementUuid;
+    private String region;
     
     public boolean didFileChange(List<String> fileName) {
         Set<String> changedFiles = new HashSet<>(added);

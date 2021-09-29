@@ -30,7 +30,7 @@ public class ExternalApiWireMock implements QuarkusTestResourceLifecycleManager 
         
         body = ResourceLoader.load("seed-engagement.json");
         
-        stubFor(get(urlEqualTo("/api/v1/engagements?includeCommits=false&includeStatus=false&pagination=false")).willReturn(aResponse()
+        stubFor(get(urlEqualTo("/api/v2/engagements?includeCommits=false&includeStatus=false&pagination=false")).willReturn(aResponse()
                 .withHeader("Content-Type",  "application/json")
                 .withBody(body)
                 ));
@@ -51,7 +51,7 @@ public class ExternalApiWireMock implements QuarkusTestResourceLifecycleManager 
         
         body = ResourceLoader.load("engagement.json");
         
-        stubFor(get(urlEqualTo("/api/v1/engagements/customer/Hats/Cap?includeStatus=false")).willReturn(aResponse()
+        stubFor(get(urlEqualTo("/api/v2/engagements/project/1")).willReturn(aResponse()
                 .withHeader("Content-Type",  "application/json")
                 .withBody(body)
                 ));

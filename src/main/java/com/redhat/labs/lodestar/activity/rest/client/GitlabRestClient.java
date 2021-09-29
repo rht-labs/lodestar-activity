@@ -15,7 +15,7 @@ import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import com.redhat.labs.lodestar.activity.model.Commit;
+import com.redhat.labs.lodestar.activity.model.Activity;
 
 @Retry(maxRetries = 5, delay = 1200, retryOn = NoHttpResponseException.class, abortOn = WebApplicationException.class)
 @Path("/api/v4")
@@ -33,6 +33,6 @@ public interface GitlabRestClient {
     
     @GET
     @Path("/projects/{id}/repository/commits/{sha}")
-    Commit getCommit(@PathParam("id") long projectPathOrId, @PathParam("sha") String sha, @QueryParam("stats") boolean stats);
+    Activity getCommit(@PathParam("id") long projectPathOrId, @PathParam("sha") String sha, @QueryParam("stats") boolean stats);
 
 }

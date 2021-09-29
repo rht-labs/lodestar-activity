@@ -1,23 +1,20 @@
 package com.redhat.labs.lodestar.activity.resource;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.redhat.labs.lodestar.activity.service.RecentCommit;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -25,7 +22,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.redhat.labs.lodestar.activity.model.Commit;
+import com.redhat.labs.lodestar.activity.model.Activity;
 import com.redhat.labs.lodestar.activity.model.Hook;
 import com.redhat.labs.lodestar.activity.service.ActivityService;
 
@@ -34,6 +31,8 @@ import com.redhat.labs.lodestar.activity.service.ActivityService;
 @Consumes(MediaType.APPLICATION_JSON)
 public class ActivityResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityResource.class);
+    private static final String ACCESS_CONTROL_EXPOSE_HEADER = "Access-Control-Expose-Headers";
+    private static final String LAST_UPDATE_HEADER = "last-update";
 
     @Inject
     ActivityService activityService;
@@ -52,7 +51,7 @@ public class ActivityResource {
     @GET
     @Path("/uuid/{uuid}")
     public Response getCommitsForEngagement(@PathParam(value = "uuid") String uuid, @QueryParam("page") int page, @QueryParam("pageSize") int pageSize) {
-        List<Commit> activity;
+        List<Activity> activity;
         Response response;
         
         if (pageSize < 1 || page < 0) {
@@ -69,19 +68,45 @@ public class ActivityResource {
         return response;
     }
 
+    @HEAD
+    @Path("{uuid}")
+    public Response getLastUpdate(@PathParam("uuid") String uuid) {
+        Activity activity = activityService.getLastActivity(uuid);
+
+        return Response.ok().header(LAST_UPDATE_HEADER, activity.getCommittedDate().toInstant())
+                .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
+    }
+
     @GET
-    public Response getAllActivity(@QueryParam("page") int page, @QueryParam("pageSize") int pageSize) {
+    public Response getAllActivity(@DefaultValue("0") @QueryParam("page") int page, @DefaultValue("100") @QueryParam("pageSize") int pageSize) {
 
-        if (pageSize < 1 || page < 0) {
-            return Response.status(Status.BAD_REQUEST).entity("Invalid Page Request").build();
-        }
-
-        List<Commit> activity = activityService.getAll(page, pageSize);
+        List<Activity> activity = activityService.getAll(page, pageSize);
         long totalActivity = activityService.getActivityCount();
 
         return Response.ok(activity).header("x-page", page).header("x-per-page", pageSize)
                 .header("x-total-activity", totalActivity).header("x-total-pages", (totalActivity / pageSize) + 1)
                 .build();
+    }
+
+    @GET
+    @Path("latest")
+    public Response getActivityPerEngagement(@DefaultValue("0") @QueryParam("page") int page,
+                                             @DefaultValue("100") @QueryParam("pageSize") int pageSize,
+                                             @QueryParam("regions") Set<String> regions) {
+        if(regions.isEmpty()) {
+            return Response.ok(activityService.getMostRecentlyUpdateEngagements(page, pageSize)).build();
+        }
+
+        return Response.ok(activityService.getMostRecentlyUpdateEngagements(page, pageSize, regions)).build();
+    }
+
+    @GET
+    @Path("latestWithTimestamp")
+    @Operation(summary = "Gets a map of engagement id and the last activity date")
+    public Map<String, OffsetDateTime> getActivityPerEngagement() {
+        return activityService.getMostRecentlyUpdateEngagements().stream().collect(Collectors.toMap(
+                RecentCommit::getEngagementUuid, RecentCommit::getCommittedDate
+        ));
     }
 
     @POST
