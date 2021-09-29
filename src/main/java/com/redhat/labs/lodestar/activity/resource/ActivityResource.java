@@ -1,7 +1,10 @@
 package com.redhat.labs.lodestar.activity.resource;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.security.PermitAll;
@@ -11,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.redhat.labs.lodestar.activity.service.RecentCommit;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -94,6 +98,15 @@ public class ActivityResource {
         }
 
         return Response.ok(activityService.getMostRecentlyUpdateEngagements(page, pageSize, regions)).build();
+    }
+
+    @GET
+    @Path("latestWithTimestamp")
+    @Operation(summary = "Gets a map of engagement id and the last activity date")
+    public Map<String, OffsetDateTime> getActivityPerEngagement() {
+        return activityService.getMostRecentlyUpdateEngagements().stream().collect(Collectors.toMap(
+                RecentCommit::getEngagementUuid, RecentCommit::getCommittedDate
+        ));
     }
 
     @POST

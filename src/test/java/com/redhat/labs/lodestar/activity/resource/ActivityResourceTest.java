@@ -8,6 +8,7 @@ import com.redhat.labs.lodestar.activity.mock.ResourceLoader;
 import com.redhat.labs.lodestar.activity.model.Activity;
 import com.redhat.labs.lodestar.activity.model.Hook;
 import com.redhat.labs.lodestar.activity.service.ActivityService;
+import com.redhat.labs.lodestar.activity.service.RecentCommit;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -91,6 +92,19 @@ class ActivityResourceTest {
         Mockito.when(service.getMostRecentlyUpdateEngagements(0, 100, Set.of("na"))).thenReturn(activity);
 
         given().queryParam("regions", "na").when().get("latest").then().statusCode(200).body("size()", equalTo(3));
+    }
+
+    @Test
+    void getLatestWithLastUpdateTimestamp() {
+        OffsetDateTime time = OffsetDateTime.parse("2021-09-20T01:38:03Z");
+        List<RecentCommit> recent = new ArrayList<>();
+        recent.add(new RecentCommit("euuid1", time));
+        recent.add(new RecentCommit("euuid2", time.minusDays(1)));
+        recent.add(new RecentCommit("euuid3", time.minusDays(2)));
+
+        Mockito.when(service.getMostRecentlyUpdateEngagements()).thenReturn(recent);
+        given().when().get("latestWithTimestamp").then().statusCode(200).body("size()", equalTo(3))
+                .body(equalTo("{\"euuid1\":\"2021-09-20T01:38:03Z\",\"euuid2\":\"2021-09-19T01:38:03Z\",\"euuid3\":\"2021-09-18T01:38:03Z\"}"));
     }
 
     @Test

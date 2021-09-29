@@ -164,6 +164,16 @@ class ActivityServiceTest {
     }
 
     @Test
+    void testMostRecentWithTimestamp() {
+        List<RecentCommit> result = service.getMostRecentlyUpdateEngagements();
+        assertEquals(result.size(), 1);
+
+        RecentCommit r = result.get(0);
+        assertEquals("cb570945-a209-40ba-9e42-63a7993baf4d", r.getEngagementUuid());
+        assertEquals(OffsetDateTime.parse("2020-04-01T17:42:42-07:00"), r.getCommittedDate());
+    }
+
+    @Test
     void testGetAllPaged() {
         long activity = service.getActivityCount();
         assertEquals(3L, activity);

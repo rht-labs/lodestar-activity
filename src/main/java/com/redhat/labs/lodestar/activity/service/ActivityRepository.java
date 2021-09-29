@@ -20,6 +20,11 @@ public class ActivityRepository implements PanacheRepository<Activity> {
             "engagementUuid, MAX(committedDate) as committedDate) " +
             "FROM Activity WHERE region in (:region) Group by engagementUuid ORDER BY committedDate desc";
 
+
+    public List<RecentCommit> findMostRecentlyUpdatedEngagements() {
+        return getEntityManager().createQuery(LAST_PER_ENGAGEMENT, RecentCommit.class).getResultList();
+    }
+
     /**
      *
      * @param page page number

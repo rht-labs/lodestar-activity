@@ -142,6 +142,10 @@ public class ActivityService {
 
     }
 
+    public List<RecentCommit> getMostRecentlyUpdateEngagements() {
+        return commitRepository.findMostRecentlyUpdatedEngagements();
+    }
+
     public List<String> getMostRecentlyUpdateEngagements(int page, int pageSize) {
         return commitRepository.findMostRecentlyUpdatedEngagements(page, pageSize);
     }
