@@ -38,10 +38,13 @@ public class PagedResults<T> {
         this();
         this.pageSize = pageSize;
     }
-    
-    
+
     public boolean hasMore() {
         return total >= number;
+    }
+
+    public void end() {
+        total = 0; // 0 = No results
     }
     
     public void update(Response response, GenericType<List<T>> type) {
