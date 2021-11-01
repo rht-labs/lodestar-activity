@@ -194,7 +194,7 @@ public class ActivityService {
                 });
             } catch (WebApplicationException ex) {
                 page.end();
-                LOGGER.error("Error retrieving engagement / project for {} page {} Message {}. Was the engagement deleted. Check / refresh engagement service",
+                LOGGER.error("Error retrieving engagement / project for {} page {} Message {}. Was the engagement deleted? Check / refresh engagement service",
                         projectPathOrId, page.getNumber(), ex.getMessage());
             }
         }
