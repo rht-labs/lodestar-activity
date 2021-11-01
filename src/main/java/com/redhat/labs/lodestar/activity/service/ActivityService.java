@@ -9,7 +9,7 @@ import com.redhat.labs.lodestar.activity.rest.client.GitlabRestClient;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.panache.common.Sort.Direction;
-import io.quarkus.runtime.StartupEvent;
+import io.quarkus.scheduler.Scheduled;
 import io.quarkus.vertx.ConsumeEvent;
 import io.vertx.mutiny.core.eventbus.EventBus;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.WebApplicationException;
@@ -63,10 +62,10 @@ public class ActivityService {
 
     /**
      * If there is no data in the activity db go get it all.
-     * 
-     * @param ev start
+     *
      */
-    void onStart(@Observes StartupEvent ev) {
+    @Scheduled(every = "5m")
+    void checkDBPopulated() {
         long count = commitRepository.count();
         LOGGER.debug("There are {} commits in the activity db.", count);
 
@@ -137,7 +136,7 @@ public class ActivityService {
         }
 
         long deletedRows = commitRepository.delete(engagementUuid, e.getUuid());
-        LOGGER.debug("Deleted {} rows for engagement {}", deletedRows, e.getUuid());
+        LOGGER.debug("Deleted {} rows for engagement {}. Adding {}", deletedRows, e.getUuid(), fullCommit.size());
         commitRepository.persist(fullCommit);
 
     }
@@ -189,9 +188,15 @@ public class ActivityService {
         PagedResults<Activity> page = new PagedResults<>(commitPageSize);
 
         while (page.hasMore()) {
-            var response = gitlabRestClient.getCommitLog(projectPathOrId, commitPageSize, page.getNumber());
-            page.update(response, new GenericType<>() {
-            });
+            try {
+                var response = gitlabRestClient.getCommitLog(projectPathOrId, commitPageSize, page.getNumber());
+                page.update(response, new GenericType<>() {
+                });
+            } catch (WebApplicationException ex) {
+                page.end();
+                LOGGER.error("Error retrieving engagement / project for {} page {} Message {}. Was the engagement deleted? Check / refresh engagement service",
+                        projectPathOrId, page.getNumber(), ex.getMessage());
+            }
         }
 
         LOGGER.debug("total commits for project {} {}", projectPathOrId, page.size());
