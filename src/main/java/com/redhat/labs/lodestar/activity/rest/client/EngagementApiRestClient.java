@@ -23,6 +23,6 @@ public interface EngagementApiRestClient {
     List<Engagement> getAllEngagements(@QueryParam("includeCommits") boolean includeCommits, @QueryParam("includeStatus") boolean includeStatus, @QueryParam("pagination") boolean pagination);
     
     @GET
-    @Path("/project/{id}")
+    @Path("/{id}")
     Engagement getEngagement(@PathParam("id") long projectId);
 }

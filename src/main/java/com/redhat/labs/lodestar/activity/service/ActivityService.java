@@ -4,7 +4,6 @@ import com.redhat.labs.lodestar.activity.model.Activity;
 import com.redhat.labs.lodestar.activity.model.Engagement;
 import com.redhat.labs.lodestar.activity.model.Hook;
 import com.redhat.labs.lodestar.activity.model.pagination.PagedResults;
-import com.redhat.labs.lodestar.activity.rest.client.EngagementApiRestClient;
 import com.redhat.labs.lodestar.activity.rest.client.GitlabRestClient;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
@@ -51,11 +50,10 @@ public class ActivityService {
     GitlabRestClient gitlabRestClient;
 
     @Inject
-    @RestClient
-    EngagementApiRestClient engagementRestClient;
+    ActivityRepository activityRepository;
 
     @Inject
-    ActivityRepository commitRepository;
+    EngagementService engagementService;
 
     @Inject
     EventBus bus;
@@ -66,7 +64,7 @@ public class ActivityService {
      */
     @Scheduled(every = "5m")
     void checkDBPopulated() {
-        long count = commitRepository.count();
+        long count = activityRepository.count();
         LOGGER.debug("There are {} commits in the activity db.", count);
 
         if (count == 0) {
@@ -84,17 +82,17 @@ public class ActivityService {
     @Transactional
     public void addNewCommits(Hook hook) {
         for (Activity commit : hook.getCommits()) {
-            Optional<Activity> entity = commitRepository.find("id", commit.getId()).firstResultOptional();
+            Optional<Activity> entity = activityRepository.find("id", commit.getId()).firstResultOptional();
             if (entity.isEmpty()) {
                 LOGGER.debug("Pid {} Commit {}", hook.getProjectId(), commit.getId());
                 var fullCommit = gitlabRestClient.getCommit(hook.getProjectId(), commit.getId(), false);
                 if(commit.didFileChange(committedFilesToWatch) && filterCommit(fullCommit)) {
                     LOGGER.debug("Activity for {} {}", hook.getCustomerName(), hook.getEngagementName());
-                    var engagement = engagementRestClient.getEngagement(hook.getProjectId());
+                    var engagement = engagementService.getEngagement(hook);
                     fullCommit.setEngagementUuid(engagement.getUuid());
                     fullCommit.setProjectId(hook.getProjectId());
                     fullCommit.setRegion(engagement.getRegion());
-                    commitRepository.persist(fullCommit);
+                    activityRepository.persist(fullCommit);
                 }
             }
         }
@@ -104,18 +102,18 @@ public class ActivityService {
     @Transactional
     public long purge(Hook hook) {
         LOGGER.info("Purging engagement {}", hook.getProjectId());
-        return commitRepository.delete("projectId", hook.getProjectId());
+        return activityRepository.delete("projectId", hook.getProjectId());
     }
 
     @Transactional
     public long purge() {
         LOGGER.info("Purging activity db");
-        return commitRepository.deleteAll();
+        return activityRepository.deleteAll();
     }
 
     public void refresh() {
 
-        List<Engagement> engagements = engagementRestClient.getAllEngagements(false, false, false);
+        List<Engagement> engagements = engagementService.getAllEngagements();
 
         LOGGER.debug("Engagement count {}", engagements.size());
 
@@ -135,26 +133,26 @@ public class ActivityService {
             commit.setRegion(e.getRegion());
         }
 
-        long deletedRows = commitRepository.delete(engagementUuid, e.getUuid());
+        long deletedRows = activityRepository.delete(engagementUuid, e.getUuid());
         LOGGER.debug("Deleted {} rows for engagement {}. Adding {}", deletedRows, e.getUuid(), fullCommit.size());
-        commitRepository.persist(fullCommit);
+        activityRepository.persist(fullCommit);
 
     }
 
     public List<RecentCommit> getMostRecentlyUpdateEngagements() {
-        return commitRepository.findMostRecentlyUpdatedEngagements();
+        return activityRepository.findMostRecentlyUpdatedEngagements();
     }
 
     public List<String> getMostRecentlyUpdateEngagements(int page, int pageSize) {
-        return commitRepository.findMostRecentlyUpdatedEngagements(page, pageSize);
+        return activityRepository.findMostRecentlyUpdatedEngagements(page, pageSize);
     }
 
     public List<String> getMostRecentlyUpdateEngagements(int page, int pageSize, Set<String> regions) {
-        return commitRepository.findMostRecentlyUpdatedEngagementsRegion(page, pageSize, regions);
+        return activityRepository.findMostRecentlyUpdatedEngagementsRegion(page, pageSize, regions);
     }
 
     public List<Activity> getActivityByUuid(String uuid) {
-        return commitRepository.list(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid);
+        return activityRepository.list(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid);
     }
 
     public Activity getLastActivity(String uuid) {
@@ -167,21 +165,21 @@ public class ActivityService {
     }
 
     public long getTotalActivityByUuid(String uuid) {
-        return commitRepository.count(engagementUuid, uuid);
+        return activityRepository.count(engagementUuid, uuid);
     }
 
     public List<Activity> getPagedActivityByUuid(String uuid, int page, int pageSize) {
-        return commitRepository.find(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid)
+        return activityRepository.find(engagementUuid, Sort.by(committedDate, Direction.Descending), uuid)
                 .page(Page.of(page, pageSize)).list();
     }
 
     public List<Activity> getAll(int page, int pageSize) {
-        return commitRepository.findAll(Sort.by(committedDate, Direction.Descending).and("id")).page(Page.of(page, pageSize))
+        return activityRepository.findAll(Sort.by(committedDate, Direction.Descending).and("id")).page(Page.of(page, pageSize))
                 .list();
     }
 
     public long getActivityCount() {
-        return commitRepository.count();
+        return activityRepository.count();
     }
 
     private List<Activity> getCommitLog(String projectPathOrId) {

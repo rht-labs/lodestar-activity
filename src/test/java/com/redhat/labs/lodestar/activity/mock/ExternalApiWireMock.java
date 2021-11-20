@@ -28,12 +28,19 @@ public class ExternalApiWireMock implements QuarkusTestResourceLifecycleManager 
                 .withBody(body)
                 ));
         
-        body = ResourceLoader.load("seed-engagement.json");
+        body = ResourceLoader.load("seed-engagement-v2.json");
         
         stubFor(get(urlEqualTo("/api/v2/engagements?includeCommits=false&includeStatus=false&pagination=false")).willReturn(aResponse()
                 .withHeader("Content-Type",  "application/json")
                 .withBody(body)
                 ));
+
+        body = ResourceLoader.load("seed-engagement.json"); //Get all engagements v2
+
+        stubFor(get(urlEqualTo("/api/v1/engagements/projects")).willReturn(aResponse()
+                .withHeader("Content-Type",  "application/json")
+                .withBody(body)
+        )); //Get all engagements v2
         
         body = ResourceLoader.load("hook-commit-1.json");
         
@@ -50,15 +57,25 @@ public class ExternalApiWireMock implements QuarkusTestResourceLifecycleManager 
                 ));
         
         body = ResourceLoader.load("engagement.json");
-        
-        stubFor(get(urlEqualTo("/api/v2/engagements/project/1")).willReturn(aResponse()
+
+        //v2 get engagement
+        stubFor(get(urlEqualTo("/api/v2/engagements/1")).willReturn(aResponse()
                 .withHeader("Content-Type",  "application/json")
                 .withBody(body)
                 ));
+
+        //v1 get engagement
+        stubFor(get(urlEqualTo("/api/v1/engagements/namespace/main%2Fstore%2FHats%2FCap%2Fiac?includeStatus=false")).willReturn(aResponse()
+                .withHeader("Content-Type",  "application/json")
+                .withBody(body)
+        ));
+
+
         
         Map<String, String> config = new HashMap<>();
         config.put("gitlab.api/mp-rest/url", wireMockServer.baseUrl());
         config.put("engagement.api/mp-rest/url", wireMockServer.baseUrl());
+        config.put("git-api-v1.api/mp-rest/url", wireMockServer.baseUrl());
         
         return config;
     }
