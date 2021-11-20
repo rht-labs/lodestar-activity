@@ -65,7 +65,7 @@ class ActivityServiceTest {
         service.purge();
         service.refresh();
 
-        Mockito.verify(repo, Mockito.timeout(1000L)).persist(Mockito.anyCollection());
+        Mockito.verify(repo, Mockito.timeout(1000L).atLeast(1)).persist(Mockito.anyCollection());
 
         long activity = service.getActivityCount();
         assertEquals(3L, activity);
