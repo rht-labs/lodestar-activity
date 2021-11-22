@@ -1,14 +1,16 @@
 package com.redhat.labs.lodestar.activity.service;
 
 import com.redhat.labs.lodestar.activity.mock.ExternalApiWireMock;
-import com.redhat.labs.lodestar.activity.model.Activity;
-import com.redhat.labs.lodestar.activity.model.Engagement;
-import com.redhat.labs.lodestar.activity.model.GitlabProject;
-import com.redhat.labs.lodestar.activity.model.Hook;
+import com.redhat.labs.lodestar.activity.model.*;
+import com.redhat.labs.lodestar.activity.rest.client.LodeStarStatusRestClient;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
+import io.quarkus.test.junit.mockito.InjectSpy;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -30,8 +32,12 @@ class ActivityServiceTest {
     @Inject
     ActivityService service;
 
-    @Inject
+    @InjectSpy
     ActivityRepository repo;
+
+    @InjectMock
+    @RestClient
+    LodeStarStatusRestClient statusRestClient;
 
     @BeforeEach
     void init() {
@@ -44,7 +50,6 @@ class ActivityServiceTest {
     void testPurge() {
 
         long deletes = service.purge();
-
         assertEquals(3, deletes);
     }
     
@@ -53,6 +58,17 @@ class ActivityServiceTest {
         Hook hook = Hook.builder().projectId(13065L).build();
         long deletes = service.purge(hook);
         assertEquals(3, deletes);
+    }
+
+    @Test
+    void testRefresh() {
+        service.purge();
+        service.refresh();
+
+        Mockito.verify(repo, Mockito.timeout(1000L).atLeast(1)).persist(Mockito.anyCollection());
+
+//        long activity = service.getActivityCount();
+//        assertEquals(3L, activity);
     }
 
     @Test
@@ -65,6 +81,8 @@ class ActivityServiceTest {
 
     @Test
     void testHook() {
+
+        Mockito.when(statusRestClient.getVersionManifest("lodestar-engagements")).thenReturn(VersionManifest.builder().value("v2.1.1").build());
 
         List<Activity> queryResp = new ArrayList<>();
         GitlabProject glp = GitlabProject.builder().pathWithNamespace("main/store/Hats/Cap/iac").build();
