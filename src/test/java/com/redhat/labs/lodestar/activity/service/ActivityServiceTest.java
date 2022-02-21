@@ -47,6 +47,12 @@ class ActivityServiceTest {
     }
 
     @Test
+    void testDBPopulated() {
+        service.checkDBPopulated();
+        Mockito.verify(repo, Mockito.timeout(1000L).atLeast(1)).count();
+    }
+
+    @Test
     void testPurge() {
 
         long deletes = service.purge();

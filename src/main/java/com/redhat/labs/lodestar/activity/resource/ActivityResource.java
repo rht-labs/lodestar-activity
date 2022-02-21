@@ -44,8 +44,9 @@ public class ActivityResource {
     List<String> committedFilesToWatch;
 
     @PostConstruct
-    void trimToken() {
+    void trimTokenAndWatch() {
         webhookToken = webhookToken.trim();
+        LOGGER.info("Watched files {}", committedFilesToWatch);
     }
 
     @GET
@@ -129,13 +130,14 @@ public class ActivityResource {
             activityService.purge(hook);
             return Response.status(Status.NO_CONTENT).build();
         }
-        
+
         if(hook.didFileChange(committedFilesToWatch)) {
             LOGGER.debug("Activity spotted for {}", hook.getEngagementName());
             activityService.addNewCommits(hook);
             return Response.accepted().build();
         }
 
+        LOGGER.debug("hook file change? {}", hook.didFileChange(committedFilesToWatch));
         return Response.ok(hook).build();
     }
 

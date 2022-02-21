@@ -20,9 +20,13 @@ import com.redhat.labs.lodestar.activity.model.Engagement;
 public interface EngagementApiRestClient {
 
     @GET
-    List<Engagement> getAllEngagements(@QueryParam("includeCommits") boolean includeCommits, @QueryParam("includeStatus") boolean includeStatus, @QueryParam("pagination") boolean pagination);
+    List<Engagement> getAllEngagements();
     
     @GET
     @Path("/{id}")
     Engagement getEngagement(@PathParam("id") long projectId);
+
+    @GET
+    @Path("/project/{id}")
+    Engagement getEngagementByProject(@PathParam("id") long projectId);
 }
